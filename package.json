@@ -16,12 +16,15 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^6.7.0",
-    "uuid": "^3.3.2",
-    "amqplib": "^0.5.3"
+    "amqplib": "^0.5.3",
+    "chai-as-promised": "^7.1.1",
+    "serialize-error": "^3.0.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.9",
     "@types/chai": "^4.1.7",
+    "@types/chai-as-promised": "^7.1.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.11",
     "@types/serialize-error": "^2.1.0",

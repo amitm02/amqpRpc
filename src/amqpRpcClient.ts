@@ -15,10 +15,9 @@ export class AmqpRpcClient {
         } else {
             this.ampqUrl = 'amqp://localhost';
         }
-        this.init();
-        
     }
-    private async init() {
+
+    async init() {
         const conn = await amqp.connect(this.ampqUrl);
         this.ch = await conn.createChannel();
         const assertQueueResp = await this.ch.assertQueue('', { exclusive: true });
