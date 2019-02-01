@@ -10,7 +10,7 @@ export declare class AmqpRpcClient {
         }) => void;
     };
     constructor(ampqUrl?: string);
-    private init;
+    init(): Promise<void>;
     private handleMessage;
     send(targetQueueName: string, data: any): Promise<{
         body: any;

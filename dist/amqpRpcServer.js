@@ -15,7 +15,6 @@ class AmqpRpcServer {
     }
     async start() {
         const conn = await amqp.connect(this.ampqUrl);
-        // process.once('SIGINT', () => this.close());
         this.ch = await conn.createChannel();
         this.ch.prefetch(1);
         await this.ch.assertQueue('imageQueue', { durable: false });

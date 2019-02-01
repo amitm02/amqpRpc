@@ -12,7 +12,6 @@ class AmqpRpcClient {
         else {
             this.ampqUrl = 'amqp://localhost';
         }
-        this.init();
     }
     async init() {
         const conn = await amqp.connect(this.ampqUrl);
