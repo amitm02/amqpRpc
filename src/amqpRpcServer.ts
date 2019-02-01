@@ -21,7 +21,7 @@ export class AmqpRpcServer {
         const conn = await amqp.connect(this.ampqUrl);
         this.ch = await conn.createChannel();
         this.ch.prefetch(1);
-        await this.ch.assertQueue('imageQueue', {durable: false});
+        await this.ch.assertQueue(this.amqpQueueName, {durable: false});
         await this.ch.consume(this.amqpQueueName, this.ampqReplay.bind(this));
         console.log(' [*] AMPQ Waiting for messages');
     }
