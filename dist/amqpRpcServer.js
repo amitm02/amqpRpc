@@ -14,7 +14,17 @@ class AmqpRpcServer {
         this.processMessageData = processMessageData;
     }
     async start() {
-        const conn = await amqp.connect(this.ampqUrl);
+        let conn = null;
+        while (conn === null) {
+            try {
+                console.log(`attempting to connect ${this.ampqUrl}`);
+                conn = await amqp.connect(this.ampqUrl);
+            }
+            catch (error) {
+                console.log(`failed to connect ${this.ampqUrl}`);
+                setTimeout(async () => { }, 1000);
+            }
+        }
         this.ch = await conn.createChannel();
         this.ch.prefetch(1);
         await this.ch.assertQueue(this.amqpQueueName, { durable: false });
