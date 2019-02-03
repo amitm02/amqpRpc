@@ -1,6 +1,7 @@
 import * as amqp from 'amqplib';
 import * as serializeError from 'serialize-error';
-import { start } from 'repl';
+
+
 
 export class AmqpRpcServer {
     ampqUrl: string;
@@ -20,13 +21,16 @@ export class AmqpRpcServer {
     
     async start() {
         let conn: amqp.Connection | null = null;
+        const timer = (ms: number)  => new Promise( res => setTimeout(res, ms));
         while (conn === null) {
             try {
                 console.log(`attempting to connect ${this.ampqUrl}`);
                 conn = await amqp.connect(this.ampqUrl);
+                console.log(`successful connection to ${this.ampqUrl}`);
+
             } catch (error) {
-                console.log(`failed to connect ${this.ampqUrl}`);
-                setTimeout(async () => {},1000);
+                console.log(`failed to connect ${this.ampqUrl}`); 
+                await timer(2000);
             }
         }
         this.ch = await conn.createChannel();
