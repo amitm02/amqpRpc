@@ -1,5 +1,5 @@
 {
-  "name": "amqpRPC",
+  "name": "amqpRpc",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -15,9 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ajv": "^6.7.0",
     "amqplib": "^0.5.3",
-    "chai-as-promised": "^7.1.1",
     "serialize-error": "^3.0.0",
     "uuid": "^3.3.2"
   },
@@ -26,12 +24,13 @@
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.11",
+    "@types/node": "^10.12.21",
     "@types/serialize-error": "^2.1.0",
     "@types/uuid": "^3.4.4",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "mocha": "^5.2.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.2.1"
+    "typescript": "^3.3.1"
   }
 }
