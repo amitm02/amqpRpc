@@ -5,7 +5,7 @@ export declare class AmqpRpcServer {
     amqpQueueName: string;
     processMessageData: (data: any) => Promise<any>;
     constructor(amqpQueueName: string, processMessageData: (data: any) => Promise<any>, ampqUrl?: string);
-    start(): Promise<void>;
+    start(maxRetry?: number): Promise<boolean>;
     close(): void;
     private ampqReplay;
     private sendBackData;

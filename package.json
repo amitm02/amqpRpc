@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "pretest": "if ! nc -z localhost 15672; then docker-compose -f src/test/docker-compose-rabbitmq.yml up -d && echo waiting to rabbitmq && sleep 10; fi",
     "test": "mocha -r ts-node/register src/test/*.ts",
     "build": "tsc",
     "prepare": "npm run build"

@@ -13,11 +13,13 @@ class AmqpRpcServer {
         this.amqpQueueName = amqpQueueName;
         this.processMessageData = processMessageData;
     }
-    async start() {
+    async start(maxRetry) {
         let conn = null;
         const timer = (ms) => new Promise(res => setTimeout(res, ms));
+        let connRetry = 0;
         while (conn === null) {
             try {
+                connRetry += 1;
                 console.log(`attempting to connect ${this.ampqUrl}`);
                 conn = await amqp.connect(this.ampqUrl);
                 console.log(`successful connection to ${this.ampqUrl}`);
@@ -25,6 +27,9 @@ class AmqpRpcServer {
             catch (error) {
                 console.log(`failed to connect ${this.ampqUrl}`);
                 await timer(2000);
+                if (maxRetry !== undefined && connRetry >= maxRetry) {
+                    return false;
+                }
             }
         }
         this.ch = await conn.createChannel();
@@ -32,6 +37,7 @@ class AmqpRpcServer {
         await this.ch.assertQueue(this.amqpQueueName, { durable: false });
         await this.ch.consume(this.amqpQueueName, this.ampqReplay.bind(this));
         console.log(' [*] AMPQ Waiting for messages');
+        return true;
     }
     close() {
         if (this.ch === undefined) {
