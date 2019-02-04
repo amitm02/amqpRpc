@@ -13,7 +13,11 @@ export class AmqpRpcClient {
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         } else {
-            this.ampqUrl = 'amqp://localhost';
+            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
+                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
+            } else {
+                this.ampqUrl = 'amqp://localhost';
+            }
         }
     }
 

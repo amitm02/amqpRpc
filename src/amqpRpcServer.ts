@@ -10,10 +10,16 @@ export class AmqpRpcServer {
     processMessageData: (data: any) => Promise<any>;
     
     constructor(amqpQueueName: string, processMessageData: (data: any) => Promise<any>, ampqUrl?: string) {
+        const a = process.env.ENV_VARIABLE
+        
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         } else {
-            this.ampqUrl = 'amqp://localhost';
+            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
+                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
+            } else {
+                this.ampqUrl = 'amqp://localhost';
+            }
         }
         this.amqpQueueName = amqpQueueName;
         this.processMessageData = processMessageData;
