@@ -10,8 +10,6 @@ export class AmqpRpcServer {
     processMessageData: (data: any) => Promise<any>;
     
     constructor(amqpQueueName: string, processMessageData: (data: any) => Promise<any>, ampqUrl?: string) {
-        const a = process.env.ENV_VARIABLE
-        
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         } else {
