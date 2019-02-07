@@ -10,15 +10,38 @@ class AmqpRpcClient {
             this.ampqUrl = ampqUrl;
         }
         else {
-            this.ampqUrl = 'amqp://localhost';
+            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
+                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
+            }
+            else {
+                this.ampqUrl = 'amqp://localhost';
+            }
         }
     }
-    async init() {
-        const conn = await amqp.connect(this.ampqUrl);
+    async init(maxRetry) {
+        let conn = null;
+        const timer = (ms) => new Promise(res => setTimeout(res, ms));
+        let connRetry = 0;
+        while (conn === null) {
+            try {
+                connRetry += 1;
+                console.log(`attempting to connect ${this.ampqUrl}`);
+                conn = await amqp.connect(this.ampqUrl);
+                console.log(`successful connection to ${this.ampqUrl}`);
+            }
+            catch (error) {
+                console.log(`failed to connect ${this.ampqUrl}`);
+                await timer(5000);
+                if (maxRetry !== undefined && connRetry >= maxRetry) {
+                    return false;
+                }
+            }
+        }
         this.ch = await conn.createChannel();
         const assertQueueResp = await this.ch.assertQueue('', { exclusive: true });
         this.respondQueueName = assertQueueResp.queue;
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
+        return true;
     }
     handleMessage(msg) {
         if (msg === null) {

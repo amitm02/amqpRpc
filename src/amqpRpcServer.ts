@@ -38,7 +38,7 @@ export class AmqpRpcServer {
 
             } catch (error) {
                 console.log(`failed to connect ${this.ampqUrl}`); 
-                await timer(2000);
+                await timer(5000);
                 if (maxRetry !== undefined && connRetry >= maxRetry) {
                     return false;
                 }

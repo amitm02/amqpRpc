@@ -10,6 +10,9 @@
     "build": "tsc",
     "prepare": "npm run build"
   },
+  "pre-commit": [
+    "build"
+  ],
   "directories": {
     "test": "test"
   },
@@ -31,6 +34,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^5.2.0",
+    "pre-commit": "^1.2.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.3.1"
   }
