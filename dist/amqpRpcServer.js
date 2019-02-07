@@ -4,7 +4,6 @@ const amqp = require("amqplib");
 const serializeError = require("serialize-error");
 class AmqpRpcServer {
     constructor(amqpQueueName, processMessageData, ampqUrl) {
-        const a = process.env.ENV_VARIABLE;
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         }
