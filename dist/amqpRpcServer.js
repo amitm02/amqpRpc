@@ -41,7 +41,7 @@ class AmqpRpcServer {
         this.ch.prefetch(1);
         await this.ch.assertQueue(this.amqpQueueName, { durable: false });
         await this.ch.consume(this.amqpQueueName, this.ampqReplay.bind(this));
-        console.log(' [*] AMPQ Waiting for messages');
+        console.log(` [*] AMPQ Waiting for messages on queue "${this.amqpQueueName}"`);
         return true;
     }
     close() {
