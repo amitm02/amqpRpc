@@ -19,10 +19,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/amqplib": "^0.5.9",
     "amqplib": "^0.5.3",
+    "axios": "^0.18.0",
     "serialize-error": "^3.0.0",
-    "uuid": "^3.3.2",
-    "@types/amqplib": "^0.5.9"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
