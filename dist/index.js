@@ -5,4 +5,5 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./amqpRpcClient"));
 __export(require("./amqpRpcServer"));
+__export(require("./rabbitmqMonitor"));
 //# sourceMappingURL=index.js.map
