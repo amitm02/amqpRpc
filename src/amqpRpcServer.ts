@@ -72,6 +72,7 @@ export class AmqpRpcServer {
             this.sendBackData(replayTo, corrId, respData, 200);
             this.ch.ack(msg);
         } catch(error) {
+            console.error(serializeError(error));
             this.sendBackData(replayTo, corrId, serializeError(error), 400);
             this.ch.nack(msg, false, false);
             return;
