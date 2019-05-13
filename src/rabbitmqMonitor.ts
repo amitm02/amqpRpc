@@ -7,7 +7,6 @@ interface QueueStatus {
 }
 interface RabbitmqQueuesDataRespItem extends QueueStatus {
     exclusive: boolean;
-
     [x: string]: any;
 }
 
@@ -17,7 +16,7 @@ export async function queueStatus(user: string, password: string, queueName: str
 }
 
 export async function queuesStatus(username: string='guest', password: string='guest', filterExclusive=true): Promise<QueueStatus[]> {
-    const url = `http://localhost:15672/api/queues/`;
+    const url = `${getRabbitMqUrl()}/api/queues/`;
     const resp = await axios.get<RabbitmqQueuesDataRespItem[]>(url, {
         auth: {
             username,
@@ -36,3 +35,30 @@ export async function queuesStatus(username: string='guest', password: string='g
     return queues;
 }
 
+
+export async function purgeAllQueues(username: string='guest', password: string='guest') {
+    const qs = await queuesStatus();
+    for (let q of qs) {
+        if (q.messages > 0) { 
+            purgeQueue(q.name, username, password);
+        }
+    }
+}
+
+export async function purgeQueue(queueName: string, username: string='guest', password: string='guest') {
+    const url = `${getRabbitMqUrl()}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
+    const resp = await axios.delete(url, {
+        auth: {
+            username,
+            password
+          }
+    });
+}
+
+function getRabbitMqUrl(): string {
+    if (process.env.RABBITMQ_HOSTNAME !== undefined) {
+        return `http://${process.env.RABBITMQ_HOSTNAME}:15672`;
+    } else {
+        return 'http://localhost:15672';
+    }
+}

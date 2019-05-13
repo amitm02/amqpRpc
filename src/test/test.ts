@@ -3,7 +3,7 @@ import {expect} from 'chai';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { AmqpRpcClient } from '../amqpRpcClient';
-import { queuesStatus } from '../rabbitmqMonitor';
+import { queuesStatus, purgeAllQueues } from '../rabbitmqMonitor';
 chai.use(chaiAsPromised);
 
 describe("amqp server", function () {
@@ -34,5 +34,10 @@ describe('rabbitmq monitor', function() {
       expect(q).to.have.property('consumers');
       expect(q).to.have.property('messages');
     });
+  });
+
+  it('purge all queue', async function() {
+    const data = await purgeAllQueues();
+    console.log(data);
   });
 });
