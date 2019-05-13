@@ -34,5 +34,9 @@ describe('rabbitmq monitor', function () {
             chai_1.expect(q).to.have.property('messages');
         });
     });
+    it('purge all queue', async function () {
+        const data = await rabbitmqMonitor_1.purgeAllQueues();
+        console.log(data);
+    });
 });
 //# sourceMappingURL=test.js.map

@@ -7,7 +7,7 @@ async function queueStatus(user, password, queueName) {
 }
 exports.queueStatus = queueStatus;
 async function queuesStatus(username = 'guest', password = 'guest', filterExclusive = true) {
-    const url = `http://localhost:15672/api/queues/`;
+    const url = `${getRabbitMqUrl()}/api/queues/`;
     const resp = await axios_1.default.get(url, {
         auth: {
             username,
@@ -26,4 +26,31 @@ async function queuesStatus(username = 'guest', password = 'guest', filterExclus
     return queues;
 }
 exports.queuesStatus = queuesStatus;
+async function purgeAllQueues(username = 'guest', password = 'guest') {
+    const qs = await queuesStatus();
+    for (let q of qs) {
+        if (q.messages > 0) {
+            purgeQueue(q.name, username, password);
+        }
+    }
+}
+exports.purgeAllQueues = purgeAllQueues;
+async function purgeQueue(queueName, username = 'guest', password = 'guest') {
+    const url = `${getRabbitMqUrl()}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
+    const resp = await axios_1.default.delete(url, {
+        auth: {
+            username,
+            password
+        }
+    });
+}
+exports.purgeQueue = purgeQueue;
+function getRabbitMqUrl() {
+    if (process.env.RABBITMQ_HOSTNAME !== undefined) {
+        return `http://${process.env.RABBITMQ_HOSTNAME}:15672`;
+    }
+    else {
+        return 'http://localhost:15672';
+    }
+}
 //# sourceMappingURL=rabbitmqMonitor.js.map
