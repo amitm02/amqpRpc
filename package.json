@@ -7,8 +7,7 @@
   "scripts": {
     "pretest": "if ! nc -z localhost 15672; then docker-compose -f src/test/docker-compose-rabbitmq.yml up -d && echo waiting to rabbitmq && sleep 10; fi",
     "test": "mocha -r ts-node/register src/test/*.ts",
-    "build": "tsc",
-    "prepare": "npm run build"
+    "build": "tsc"
   },
   "pre-commit": [
     "build"
@@ -19,19 +18,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/amqplib": "^0.5.12",
     "amqplib": "^0.5.3",
     "axios": "^0.18.1",
     "serialize-error": "^3.0.0",
-    "uuid": "^3.3.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.5.12",
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.14.8",
     "@types/serialize-error": "^2.1.0",
-    "@types/uuid": "^3.4.4"
-  },
-  "devDependencies": {
+    "@types/uuid": "^3.4.4",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^5.2.0",
