@@ -9,20 +9,29 @@ chai.use(chaiAsPromised);
 describe("amqp server", function () {
     it("rabbitmq does not exists", async function () {
         const amqpRpcServer = new AmqpRpcServer('some queue', (data) => data, 'amqp://localhost:1111');
+        console.log(1111);
         const succ = await amqpRpcServer.start(1);
+        console.log(2222);
         expect(succ === false);
       }).timeout(5000);
+
       it("rabbitmq regular server", async function () {
         const amqpRpcServer = new AmqpRpcServer('some queue', (data) => data);
         const succ = await amqpRpcServer.start();
-        expect(succ === false);
+        expect(succ === true);
       });
 });
 
 describe("amqp client", function () {
-    it("rabbitmq does not exists", function () {
+    it("client init - rabbitmq does not exists", async function () {
         const amqpRpcClient = new AmqpRpcClient('amqp://localhost:1111');
-        expect(amqpRpcClient.init()).to.eventually.throw();
+        const succ = await amqpRpcClient.init(1);
+        expect(succ === false);
+      });
+      it("client init - regular rabbitmq", async function () {
+        const amqpRpcClient = new AmqpRpcClient();
+        const succ = await amqpRpcClient.init(1);
+        expect(succ === true);
       });
 });
 
