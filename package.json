@@ -22,7 +22,7 @@
     "axios": "^0.18.1",
     "serialize-error": "^3.0.0",
     "uuid": "^3.3.2",
-    "@types/amqplib": "^0.5.12",
+    "@types/amqplib": "^0.5.12"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
