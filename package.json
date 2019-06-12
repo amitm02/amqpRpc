@@ -21,10 +21,10 @@
     "amqplib": "^0.5.3",
     "axios": "^0.18.1",
     "serialize-error": "^3.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "@types/amqplib": "^0.5.12",
   },
   "devDependencies": {
-    "@types/amqplib": "^0.5.12",
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
     "@types/mocha": "^5.2.7",
