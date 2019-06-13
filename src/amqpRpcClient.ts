@@ -1,3 +1,9 @@
+//TODO test a simple client-server interaction
+//TODO: change pendingRequests to WEAK MAP
+//TODO add rxjs for streams
+//TODO add last stream message 
+//TODO test a stream client-server interaction
+
 import * as amqp from 'amqplib';
 import { v4 as uuid } from 'uuid';
 
@@ -6,6 +12,8 @@ export class AmqpRpcClient {
     ch: amqp.Channel | undefined;
     respondQueueName: string | undefined;
     // @ts-ignore
+
+    
     pendingRequests: { [corrId: string]: ({body: any, status: number}) => void } = {}; 
 
     
