@@ -1,4 +1,9 @@
 "use strict";
+//TODO test a simple client-server interaction
+//TODO: change pendingRequests to WEAK MAP
+//TODO add rxjs for streams
+//TODO add last stream message 
+//TODO test a stream client-server interaction
 Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const uuid_1 = require("uuid");

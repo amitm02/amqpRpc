@@ -33,6 +33,20 @@ describe("amqp client", function () {
         chai_1.expect(succ === true);
     });
 });
+describe("messaging", function () {
+    it("simple messaging", async function () {
+        const amqpRpcServer = new __1.AmqpRpcServer('some queue', (data) => data + 1);
+        const ServerSucc = await amqpRpcServer.start();
+        chai_1.expect(ServerSucc === true);
+        const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
+        const clinetSucc = await amqpRpcClient.init(1);
+        chai_1.expect(clinetSucc === true);
+        const resp = await amqpRpcClient.send('some queue', 3);
+        console.log(resp);
+        chai_1.expect(resp.status).equal(200);
+        chai_1.expect(resp.body).equal(4);
+    });
+});
 describe('rabbitmq monitor', function () {
     it('list queues', async function () {
         const data = await rabbitmqMonitor_1.queuesStatus();
