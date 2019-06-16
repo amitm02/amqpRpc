@@ -1,11 +1,8 @@
-//TODO test a simple client-server interaction
-//TODO: change pendingRequests to WEAK MAP
-//TODO add rxjs for streams
-//TODO add last stream message 
-//TODO test a stream client-server interaction
-
 import * as amqp from 'amqplib';
 import { v4 as uuid } from 'uuid';
+import { ReplaySubject, Observable } from 'rxjs';
+
+interface Message {body: any, status: number};
 
 export class AmqpRpcClient {
     ampqUrl: string;
@@ -14,7 +11,7 @@ export class AmqpRpcClient {
     // @ts-ignore
 
     
-    pendingRequests: { [corrId: string]: ({body: any, status: number}) => void } = {}; 
+    pendingRequests: { [corrId: string]: ReplaySubject<Message> } = {}; 
 
     
     constructor(ampqUrl?: string) {
@@ -56,40 +53,49 @@ export class AmqpRpcClient {
         return true;
     }
 
-   private handleMessage(msg: amqp.Message | null): void {
+    //make to to complete the subject
+    send(targetQueueName: string, data: any, stream = false): Observable<Message> {   
+        if (this.ch === undefined) {
+            throw new Error('server is not initilized yet');
+        }     
+        const corrId = uuid();
+        const subject = new ReplaySubject<Message>();
+        this.pendingRequests[corrId] = subject;
+        this.ch.sendToQueue(targetQueueName,
+            Buffer.from(JSON.stringify(data)),
+            {
+                correlationId: corrId,
+                replyTo: this.respondQueueName,
+                contentType: 'application/json',
+                type: 'C2S',
+                headers: {
+                    stream
+                }
+            }
+        );
+        return subject;
+    }
+
+    private handleMessage(msg: amqp.Message | null): void {
         if (msg === null) {
             return;
         }
-        const resolveFunc = this.pendingRequests[msg.properties.correlationId];
-        if (resolveFunc === undefined) {
+        const subject = this.pendingRequests[msg.properties.correlationId];
+        if (subject === undefined) {
+            console.error(`recived a amqp meesage with unknonw correlation number: ${JSON.stringify(msg)}`)
             return;
         }
-        delete this.pendingRequests[msg.properties.correlationId];
         const body = JSON.parse(msg.content.toString());
-        resolveFunc({
-            body,
-            status: msg.properties.headers['status']
-        });
-    }
-
-    send(targetQueueName: string, data: any): Promise<{ body: any, status: number }> {
-        
-        const corrId = uuid();
-        return new Promise((resolve, error) => {
-            if (this.ch === undefined) {
-                error('server is not initilized yet');
-                return;
-            }
-            this.pendingRequests[corrId] = resolve;
-            this.ch.sendToQueue(targetQueueName,
-                Buffer.from(JSON.stringify(data)),
-                {
-                    correlationId: corrId,
-                    replyTo: this.respondQueueName,
-                    contentType: 'application/json'
-                }
-            );
-        });
+        if (msg.properties.headers.status !== 204) {
+            subject.next({
+                body,
+                status: msg.properties.headers.status
+            });
+        }
+        if (msg.properties.headers.endStream === true) {
+            delete this.pendingRequests[msg.properties.correlationId];
+            subject.complete();
+        }
     }
 
     async flush() {
@@ -102,6 +108,7 @@ export class AmqpRpcClient {
     }
 
     close() {
+        this.pendingRequests = {};
         if (this.ch === undefined) {
             return;
         }

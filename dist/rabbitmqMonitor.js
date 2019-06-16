@@ -30,7 +30,7 @@ async function purgeAllQueues(username = 'guest', password = 'guest') {
     const qs = await queuesStatus();
     for (let q of qs) {
         if (q.messages > 0) {
-            purgeQueue(q.name, username, password);
+            await purgeQueue(q.name, username, password);
         }
     }
 }

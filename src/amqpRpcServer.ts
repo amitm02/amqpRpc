@@ -1,15 +1,18 @@
 import * as amqp from 'amqplib';
 import * as serializeError from 'serialize-error';
+import { Subject } from 'rxjs';
+import { error } from 'util';
 
 
+type ProcessMessageDataFunc =  (data: any, subject: Subject<any>) => Promise<void>;
 
 export class AmqpRpcServer {
     ampqUrl: string;
     ch: amqp.Channel | undefined;
     amqpQueueName: string;
-    processMessageData: (data: any) => Promise<any>;
+    processMessageData: ProcessMessageDataFunc;
     
-    constructor(amqpQueueName: string, processMessageData: (data: any) => Promise<any>, ampqUrl?: string) {
+    constructor(amqpQueueName: string, processMessageData: ProcessMessageDataFunc, ampqUrl?: string) {
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         } else {
@@ -51,46 +54,75 @@ export class AmqpRpcServer {
         return true;
     }
 
-    close() {
-        if (this.ch === undefined) {
-            return;
-        }
-        this.ch.close();
-    }
+    
 
     private async ampqReplay(msg: amqp.Message | null) {
         if (msg === null) {
             return;
         }
-        if (this.ch === undefined) {
-            throw new Error('channel is undefined');
+        if (!validChannel(this.ch)) {
+            return;
         }
-        const replayTo = msg.properties.replyTo;
-        const corrId = msg.properties.correlationId;
+        this.ch.ack(msg);
+        const replyTo: string = msg.properties.replyTo;
+        const corrId: string = msg.properties.correlationId;
+        const subject = new Subject();
+        const isRequestingStream: boolean = msg.properties.headers.stream;
+        subject.subscribe({
+            next: (respData) => {
+                this.sendBackData(replyTo, corrId, respData, 200, !isRequestingStream);
+            },
+            error: (err) => {
+                this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+            },
+            complete: () => {
+                if (isRequestingStream) {
+                    this.sendBackData(replyTo, corrId, null, 204, true);
+                }
+            }
+        });
         try {
             const reqData = JSON.parse(msg.content.toString());
-            const respData = await this.processMessageData(reqData);
-            this.sendBackData(replayTo, corrId, respData, 200);
-            this.ch.ack(msg);
-        } catch(error) {
+            await this.processMessageData(reqData, subject);
+            if (!subject.closed && !subject.hasError) {
+                console.error('processMessageData did not close the Subject');
+            }
+        } catch(err) {
             console.error(serializeError(error));
-            this.sendBackData(replayTo, corrId, serializeError(error), 400);
-            this.ch.nack(msg, false, false);
-            return;
+            subject.unsubscribe();
+            this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
         }
     }
 
-    private sendBackData(targetQueueName: string, corrId: string, data: any, status: number) {
-        if (this.ch === undefined) {
-            throw new Error('channel is undefined');
-        }
+    private sendBackData(targetQueueName: string, corrId: string, data: any, status: number, endStream: boolean) {
+        if (!validChannel(this.ch)) {
+            return;
+        };
         this.ch.sendToQueue(
             targetQueueName,
             Buffer.from(JSON.stringify(data)),
             {
                 correlationId: corrId, 
                 contentType: 'application/json',
-                headers: {status}
+                type: 'S2C',
+                headers: {
+                    status,
+                    endStream
+                }
             });
     }
+
+    async close() {
+        if (this.ch === undefined) {
+            return;
+        }
+        await this.ch.close();
+    }
+}
+
+function validChannel(ch: amqp.Channel | undefined): ch is amqp.Channel {
+    if (ch === undefined) {
+        throw new Error('channel is undefined');
+    } 
+    return true;
 }

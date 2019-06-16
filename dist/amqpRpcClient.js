@@ -7,6 +7,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const uuid_1 = require("uuid");
+const rxjs_1 = require("rxjs");
+;
 class AmqpRpcClient {
     constructor(ampqUrl) {
         // @ts-ignore
@@ -50,35 +52,43 @@ class AmqpRpcClient {
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
         return true;
     }
+    send(targetQueueName, data, stream = false) {
+        if (this.ch === undefined) {
+            throw new Error('server is not initilized yet');
+        }
+        const corrId = uuid_1.v4();
+        console.log(`use corrId ${corrId}`);
+        const subject = new rxjs_1.ReplaySubject();
+        this.pendingRequests[corrId] = subject;
+        this.ch.sendToQueue(targetQueueName, Buffer.from(JSON.stringify(data)), {
+            correlationId: corrId,
+            replyTo: this.respondQueueName,
+            contentType: 'application/json',
+            type: 'C2S',
+            headers: {
+                stream
+            }
+        });
+        return subject;
+    }
     handleMessage(msg) {
         if (msg === null) {
             return;
         }
-        const resolveFunc = this.pendingRequests[msg.properties.correlationId];
-        if (resolveFunc === undefined) {
+        const subject = this.pendingRequests[msg.properties.correlationId];
+        if (subject === undefined) {
+            console.error(`recived a amqp meesage with unknonw correlation number: ${JSON.stringify(msg)}`);
             return;
         }
-        delete this.pendingRequests[msg.properties.correlationId];
         const body = JSON.parse(msg.content.toString());
-        resolveFunc({
+        subject.next({
             body,
-            status: msg.properties.headers['status']
+            status: msg.properties.headers.status
         });
-    }
-    send(targetQueueName, data) {
-        const corrId = uuid_1.v4();
-        return new Promise((resolve, error) => {
-            if (this.ch === undefined) {
-                error('server is not initilized yet');
-                return;
-            }
-            this.pendingRequests[corrId] = resolve;
-            this.ch.sendToQueue(targetQueueName, Buffer.from(JSON.stringify(data)), {
-                correlationId: corrId,
-                replyTo: this.respondQueueName,
-                contentType: 'application/json'
-            });
-        });
+        if (msg.properties.headers.endStream === true) {
+            delete this.pendingRequests[msg.properties.correlationId];
+            subject.complete();
+        }
     }
     async flush() {
         if (this.ch === undefined || this.respondQueueName === undefined) {

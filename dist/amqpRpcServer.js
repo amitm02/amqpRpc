@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const serializeError = require("serialize-error");
+const rxjs_1 = require("rxjs");
+const util_1 = require("util");
 class AmqpRpcServer {
     constructor(amqpQueueName, processMessageData, ampqUrl) {
         if (ampqUrl !== undefined) {
@@ -46,44 +48,80 @@ class AmqpRpcServer {
         console.log(` [*] AMPQ Waiting for messages on queue "${this.amqpQueueName}"`);
         return true;
     }
+    async ampqReplay(msg) {
+        console.log('ampqReplay');
+        if (msg === null) {
+            return;
+        }
+        if (!validChannel(this.ch)) {
+            return;
+        }
+        this.ch.ack(msg);
+        const replyTo = msg.properties.replyTo;
+        const corrId = msg.properties.correlationId;
+        const subject = new rxjs_1.Subject();
+        const isRequestingStream = msg.properties.headers.stream;
+        subject.subscribe({
+            next: (respData) => {
+                if (!validChannel(this.ch)) {
+                    console.log('err');
+                    return;
+                }
+                this.sendBackData(replyTo, corrId, respData, 200, !isRequestingStream);
+            },
+            error: (err) => {
+                if (!validChannel(this.ch)) {
+                    console.log('err');
+                    return;
+                }
+                this.sendBackData(replyTo, corrId, serializeError(err), 400, !isRequestingStream);
+            },
+            complete: () => {
+                if (isRequestingStream) {
+                    console.log('sending done msg');
+                    this.sendBackData(replyTo, corrId, null, 200, true);
+                }
+            }
+        });
+        try {
+            const reqData = JSON.parse(msg.content.toString());
+            console.log('calling processMessageData');
+            await this.processMessageData(reqData, subject);
+            console.log('after processMessageData');
+        }
+        catch (err) {
+            console.error(serializeError(util_1.error));
+            this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+        }
+    }
+    sendBackData(targetQueueName, corrId, data, status, endStream) {
+        if (!validChannel(this.ch)) {
+            return;
+        }
+        ;
+        this.ch.sendToQueue(targetQueueName, Buffer.from(JSON.stringify(data)), {
+            correlationId: corrId,
+            contentType: 'application/json',
+            type: 'S2C',
+            headers: {
+                status,
+                endStream
+            }
+        });
+    }
+    //TODO. send error to all open subjects
     close() {
         if (this.ch === undefined) {
             return;
         }
         this.ch.close();
     }
-    async ampqReplay(msg) {
-        if (msg === null) {
-            return;
-        }
-        if (this.ch === undefined) {
-            throw new Error('channel is undefined');
-        }
-        const replayTo = msg.properties.replyTo;
-        const corrId = msg.properties.correlationId;
-        try {
-            const reqData = JSON.parse(msg.content.toString());
-            const respData = await this.processMessageData(reqData);
-            this.sendBackData(replayTo, corrId, respData, 200);
-            this.ch.ack(msg);
-        }
-        catch (error) {
-            console.error(serializeError(error));
-            this.sendBackData(replayTo, corrId, serializeError(error), 400);
-            this.ch.nack(msg, false, false);
-            return;
-        }
-    }
-    sendBackData(targetQueueName, corrId, data, status) {
-        if (this.ch === undefined) {
-            throw new Error('channel is undefined');
-        }
-        this.ch.sendToQueue(targetQueueName, Buffer.from(JSON.stringify(data)), {
-            correlationId: corrId,
-            contentType: 'application/json',
-            headers: { status }
-        });
-    }
 }
 exports.AmqpRpcServer = AmqpRpcServer;
+function validChannel(ch) {
+    if (ch === undefined) {
+        throw new Error('channel is undefined');
+    }
+    return true;
+}
 //# sourceMappingURL=amqpRpcServer.js.map
