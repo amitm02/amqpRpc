@@ -76,9 +76,6 @@ class AmqpRpcServer {
         try {
             const reqData = JSON.parse(msg.content.toString());
             await this.processMessageData(reqData, subject);
-            if (!subject.closed && !subject.hasError) {
-                console.error('processMessageData did not close the Subject');
-            }
         }
         catch (err) {
             console.error(serializeError(util_1.error));
