@@ -1,9 +1,4 @@
 "use strict";
-//TODO test a simple client-server interaction
-//TODO: change pendingRequests to WEAK MAP
-//TODO add rxjs for streams
-//TODO add last stream message 
-//TODO test a stream client-server interaction
 Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const uuid_1 = require("uuid");
@@ -52,12 +47,12 @@ class AmqpRpcClient {
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
         return true;
     }
+    //make to to complete the subject
     send(targetQueueName, data, stream = false) {
         if (this.ch === undefined) {
             throw new Error('server is not initilized yet');
         }
         const corrId = uuid_1.v4();
-        console.log(`use corrId ${corrId}`);
         const subject = new rxjs_1.ReplaySubject();
         this.pendingRequests[corrId] = subject;
         this.ch.sendToQueue(targetQueueName, Buffer.from(JSON.stringify(data)), {
@@ -81,10 +76,12 @@ class AmqpRpcClient {
             return;
         }
         const body = JSON.parse(msg.content.toString());
-        subject.next({
-            body,
-            status: msg.properties.headers.status
-        });
+        if (msg.properties.headers.status !== 204) {
+            subject.next({
+                body,
+                status: msg.properties.headers.status
+            });
+        }
         if (msg.properties.headers.endStream === true) {
             delete this.pendingRequests[msg.properties.correlationId];
             subject.complete();
@@ -99,6 +96,7 @@ class AmqpRpcClient {
         this.pendingRequests = {};
     }
     close() {
+        this.pendingRequests = {};
         if (this.ch === undefined) {
             return;
         }

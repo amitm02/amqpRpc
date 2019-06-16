@@ -10,6 +10,6 @@ export declare class AmqpRpcServer {
     start(maxRetry?: number): Promise<boolean>;
     private ampqReplay;
     private sendBackData;
-    close(): void;
+    close(): Promise<void>;
 }
 export {};

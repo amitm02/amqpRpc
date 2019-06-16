@@ -49,7 +49,6 @@ class AmqpRpcServer {
         return true;
     }
     async ampqReplay(msg) {
-        console.log('ampqReplay');
         if (msg === null) {
             return;
         }
@@ -63,34 +62,27 @@ class AmqpRpcServer {
         const isRequestingStream = msg.properties.headers.stream;
         subject.subscribe({
             next: (respData) => {
-                if (!validChannel(this.ch)) {
-                    console.log('err');
-                    return;
-                }
                 this.sendBackData(replyTo, corrId, respData, 200, !isRequestingStream);
             },
             error: (err) => {
-                if (!validChannel(this.ch)) {
-                    console.log('err');
-                    return;
-                }
-                this.sendBackData(replyTo, corrId, serializeError(err), 400, !isRequestingStream);
+                this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
             },
             complete: () => {
                 if (isRequestingStream) {
-                    console.log('sending done msg');
-                    this.sendBackData(replyTo, corrId, null, 200, true);
+                    this.sendBackData(replyTo, corrId, null, 204, true);
                 }
             }
         });
         try {
             const reqData = JSON.parse(msg.content.toString());
-            console.log('calling processMessageData');
             await this.processMessageData(reqData, subject);
-            console.log('after processMessageData');
+            if (!subject.closed && !subject.hasError) {
+                console.error('processMessageData did not close the Subject');
+            }
         }
         catch (err) {
             console.error(serializeError(util_1.error));
+            subject.unsubscribe();
             this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
         }
     }
@@ -109,12 +101,11 @@ class AmqpRpcServer {
             }
         });
     }
-    //TODO. send error to all open subjects
-    close() {
+    async close() {
         if (this.ch === undefined) {
             return;
         }
-        this.ch.close();
+        await this.ch.close();
     }
 }
 exports.AmqpRpcServer = AmqpRpcServer;

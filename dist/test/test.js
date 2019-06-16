@@ -6,6 +6,7 @@ const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
 const amqpRpcClient_1 = require("../amqpRpcClient");
 const rabbitmqMonitor_1 = require("../rabbitmqMonitor");
+const operators_1 = require("rxjs/operators");
 chai.use(chaiAsPromised);
 function sleep(ms = 0) {
     return new Promise(r => setTimeout(r, ms));
@@ -15,11 +16,13 @@ describe("amqp server", function () {
         const amqpRpcServer = new __1.AmqpRpcServer('some queue', (data) => data, 'amqp://localhost:1111');
         const succ = await amqpRpcServer.start(1);
         chai_1.expect(succ === false);
+        await amqpRpcServer.close();
     }).timeout(5000);
     it("rabbitmq regular server", async function () {
         const amqpRpcServer = new __1.AmqpRpcServer('some queue', (data) => data);
         const succ = await amqpRpcServer.start();
         chai_1.expect(succ === true);
+        await amqpRpcServer.close();
     });
 });
 describe("amqp client", function () {
@@ -34,12 +37,11 @@ describe("amqp client", function () {
         chai_1.expect(succ === true);
     });
 });
-describe("messaging", function () {
+describe("simple messaging", function () {
     this.beforeEach(async () => {
         await rabbitmqMonitor_1.purgeAllQueues();
     });
     it("simple messaging", async function () {
-        console.log('*** simple messaging');
         const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => subject.next(data + 1));
         const ServerSucc = await amqpRpcServer.start();
         chai_1.expect(ServerSucc === true);
@@ -49,18 +51,32 @@ describe("messaging", function () {
         const resp = await amqpRpcClient.send('some queue', 3).toPromise();
         chai_1.expect(resp.status).equal(200);
         chai_1.expect(resp.body).equal(4);
-        console.log('*** simple messaging - done');
+        await amqpRpcServer.close();
     }).timeout(5000);
-    it("stream messaging", function (done) {
-        console.log('*** stream messaging');
+    it("simple messaging with error", async function () {
         const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => {
-            console.log('start loop');
+            throw new Error('some error');
+        });
+        const ServerSucc = await amqpRpcServer.start();
+        chai_1.expect(ServerSucc === true);
+        const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
+        const clinetSucc = await amqpRpcClient.init(1);
+        chai_1.expect(clinetSucc === true);
+        const resp = await amqpRpcClient.send('some queue', 3).toPromise();
+        chai_1.expect(resp.status).equal(400);
+        await amqpRpcServer.close();
+    }).timeout(5000);
+});
+describe("stream messaging", function () {
+    this.beforeEach(async () => {
+        await rabbitmqMonitor_1.purgeAllQueues();
+    });
+    it("stream messaging", function (done) {
+        const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => {
             for (let i = 0; i < 10; i++) {
-                data = data + 1;
-                console.log('add one and subject.next();');
                 subject.next(data);
+                data = data + 1;
             }
-            console.log('subject.complete();');
             subject.complete();
         });
         const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
@@ -68,30 +84,89 @@ describe("messaging", function () {
             amqpRpcServer.start(),
             amqpRpcClient.init(1)
         ]).then(() => {
-            // amqpRpcClient.send('some queue', 3, true)
-            // .pipe(
-            //   toArray()
-            // ).subscribe(a => {
-            //     console.log(a);
-            // });
-            amqpRpcClient.send('some queue', 3, true)
-                .subscribe(v => {
-                console.log(v);
-            }, () => { }, () => {
-                // done();
+            amqpRpcClient.send('some queue', 0, true)
+                .pipe(operators_1.map(msg => msg.body), operators_1.toArray()).subscribe(a => {
+                chai_1.expect(a).eql([...Array(10).keys()]);
+                amqpRpcServer.close();
+                done();
+            });
+        });
+    });
+    it("stream messaging with subject.error()", function (done) {
+        const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => {
+            for (let i = 0; i < 5; i++) {
+                if (i == 3) {
+                    subject.error('some err');
+                }
+                else {
+                    subject.next(data);
+                }
+            }
+            subject.complete();
+        });
+        const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
+        Promise.all([
+            amqpRpcServer.start(),
+            amqpRpcClient.init(1)
+        ]).then(() => {
+            amqpRpcClient.send('some queue', 0, true)
+                .pipe(operators_1.map(msg => msg.status), operators_1.toArray()).subscribe(a => {
+                chai_1.expect(a).eql([200, 200, 200, 400]);
+                amqpRpcServer.close();
+                done();
+            });
+        });
+    });
+    it("stream messaging with unhandled error", function (done) {
+        const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => {
+            for (let i = 0; i < 5; i++) {
+                if (i == 3) {
+                    throw new Error('some error');
+                }
+                else {
+                    subject.next(data);
+                }
+            }
+            subject.complete();
+        });
+        const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
+        Promise.all([
+            amqpRpcServer.start(),
+            amqpRpcClient.init(1)
+        ]).then(() => {
+            amqpRpcClient.send('some queue', 0, true)
+                .pipe(operators_1.map(msg => msg.status), operators_1.toArray()).subscribe(a => {
+                chai_1.expect(a).eql([200, 200, 200, 400]);
+                amqpRpcServer.close();
+                done();
+            });
+        });
+    });
+    it("stream messaging without closing Subject", function (done) {
+        const EXPECTED_TIMEOUT = 3000;
+        const amqpRpcServer = new __1.AmqpRpcServer('some queue', async (data, subject) => {
+            for (let i = 0; i < 10; i++) {
+                subject.next(data);
+                data = data + 1;
+            }
+        });
+        const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
+        Promise.all([
+            amqpRpcServer.start(),
+            amqpRpcClient.init(1)
+        ]).then(() => {
+            const timeout = setTimeout(() => {
+                amqpRpcServer.close();
+                done();
+            }, EXPECTED_TIMEOUT);
+            amqpRpcClient.send('some queue', 0, true)
+                .pipe(operators_1.map(msg => msg.body), operators_1.toArray()).subscribe(a => {
+                clearTimeout(timeout);
+                amqpRpcServer.close();
+                done(new Error('Unexpected call - function does not contain complete'));
             });
         });
     }).timeout(5000);
-    // it("stream messaging", function (done) {
-    //   const amqpRpcServer = new AmqpRpcServer('some queue', (data) => data+1);
-    //   const amqpRpcClient = new AmqpRpcClient();
-    //   Promise.all([amqpRpcServer.start(), amqpRpcClient.init(1)]).then(() => {
-    //     const resp = amqpRpcClient.sendStream('some queue', 3);
-    //     resp.subscribe(m => {
-    //       console.log(m);
-    //     })
-    //   });
-    // }).timeout(1000000);;
 });
 describe('rabbitmq monitor', function () {
     it('list queues', async function () {
@@ -104,7 +179,6 @@ describe('rabbitmq monitor', function () {
     });
     it('purge all queue', async function () {
         const data = await rabbitmqMonitor_1.purgeAllQueues();
-        console.log(data);
     });
 });
 //# sourceMappingURL=test.js.map
