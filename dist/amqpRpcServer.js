@@ -43,7 +43,10 @@ class AmqpRpcServer {
         }
         this.ch = await conn.createChannel();
         this.ch.prefetch(1);
-        await this.ch.assertQueue(this.amqpQueueName, { durable: false });
+        await this.ch.assertQueue(this.amqpQueueName, {
+            durable: false,
+            autoDelete: true,
+        });
         await this.ch.consume(this.amqpQueueName, this.ampqReplay.bind(this));
         console.log(` [*] AMPQ Waiting for messages on queue "${this.amqpQueueName}"`);
         return true;
@@ -72,12 +75,12 @@ class AmqpRpcServer {
             },
             error: (err) => {
                 this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
-                ch.nack(msg);
+                ch.ack(msg);
             },
             complete: () => {
                 if (isRequestingStream) {
                     this.sendBackData(replyTo, corrId, null, 204, true);
-                    ch.nack(msg);
+                    ch.ack(msg);
                 }
             }
         });

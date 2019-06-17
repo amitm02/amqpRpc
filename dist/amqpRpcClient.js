@@ -42,7 +42,10 @@ class AmqpRpcClient {
             }
         }
         this.ch = await conn.createChannel();
-        const assertQueueResp = await this.ch.assertQueue('', { exclusive: true });
+        const assertQueueResp = await this.ch.assertQueue('', {
+            exclusive: true,
+            autoDelete: true
+        });
         this.respondQueueName = assertQueueResp.queue;
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
         return true;
@@ -95,12 +98,17 @@ class AmqpRpcClient {
         await this.ch.purgeQueue(this.respondQueueName);
         this.pendingRequests = {};
     }
-    close() {
+    async close() {
         this.pendingRequests = {};
         if (this.ch === undefined) {
             return;
         }
-        this.ch.close();
+        try {
+            await this.ch.close();
+        }
+        catch (err) {
+            console.error(err);
+        }
     }
 }
 exports.AmqpRpcClient = AmqpRpcClient;

@@ -16,6 +16,6 @@ export declare class AmqpRpcClient {
     send(targetQueueName: string, data: any, stream?: boolean): Observable<Message>;
     private handleMessage;
     flush(): Promise<void>;
-    close(): void;
+    close(): Promise<void>;
 }
 export {};

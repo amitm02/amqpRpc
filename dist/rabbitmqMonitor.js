@@ -28,8 +28,10 @@ async function queuesStatus(username = 'guest', password = 'guest', filterExclus
 exports.queuesStatus = queuesStatus;
 async function purgeAllQueues(username = 'guest', password = 'guest') {
     const qs = await queuesStatus();
+    console.log(`purging ${qs.length} queues`);
     for (let q of qs) {
         if (q.messages > 0) {
+            console.log(`purging ${q.messages} from queue ${q.name}`);
             await purgeQueue(q.name, username, password);
         }
     }
