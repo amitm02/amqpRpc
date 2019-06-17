@@ -36,16 +36,23 @@ export async function queuesStatus(username: string='guest', password: string='g
 }
 
 
-export async function purgeAllQueues(username: string='guest', password: string='guest') {
+export async function purgeAllQueues(
+    username: string='guest', 
+    password: string='guest'): Promise<void> {
     const qs = await queuesStatus();
+    console.log(`purging ${qs.length} queues`);
     for (let q of qs) {
-        if (q.messages > 0) { 
+        if (q.messages > 0) {
+            console.log(`purging ${q.messages} from queue ${q.name}`); 
             await purgeQueue(q.name, username, password);
         }
     }
 }
 
-export async function purgeQueue(queueName: string, username: string='guest', password: string='guest') {
+export async function purgeQueue(
+    queueName: string, 
+    username: string='guest', 
+    password: string='guest'): Promise<void> {
     const url = `${getRabbitMqUrl()}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
     const resp = await axios.delete(url, {
         auth: {
