@@ -63,21 +63,28 @@ export class AmqpRpcServer {
         if (!validChannel(this.ch)) {
             return;
         }
-        this.ch.ack(msg);
+        const ch = this.ch;
         const replyTo: string = msg.properties.replyTo;
         const corrId: string = msg.properties.correlationId;
         const subject = new Subject();
         const isRequestingStream: boolean = msg.properties.headers.stream;
         subject.subscribe({
             next: (respData) => {
-                this.sendBackData(replyTo, corrId, respData, 200, !isRequestingStream);
+                if (isRequestingStream) {
+                    this.sendBackData(replyTo, corrId, respData, 200, false);
+                } else {
+                    this.sendBackData(replyTo, corrId, respData, 200, true);
+                    ch.ack(msg);
+                }
             },
             error: (err) => {
                 this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+                ch.nack(msg);
             },
             complete: () => {
                 if (isRequestingStream) {
                     this.sendBackData(replyTo, corrId, null, 204, true);
+                    ch.nack(msg);
                 }
             }
         });
