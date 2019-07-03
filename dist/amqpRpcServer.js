@@ -90,8 +90,7 @@ class AmqpRpcServer {
         }
         catch (err) {
             console.error(serializeError(util_1.error));
-            subject.unsubscribe();
-            this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+            subject.error(util_1.error);
         }
     }
     sendBackData(targetQueueName, corrId, data, status, endStream) {
