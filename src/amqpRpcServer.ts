@@ -96,13 +96,12 @@ export class AmqpRpcServer {
             await this.processMessageData(reqData, subject);
         } catch(err) {
             console.error(serializeError(error));
-            subject.unsubscribe();
-            this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+            subject.error(error);
         }
     }
 
     private sendBackData(targetQueueName: string, corrId: string, data: any, status: number, endStream: boolean) {
-        if (!validChannel(this.ch)) {
+            if (!validChannel(this.ch)) {
             return;
         };
         this.ch.sendToQueue(
