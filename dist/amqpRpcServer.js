@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const serializeError = require("serialize-error");
 const rxjs_1 = require("rxjs");
-const util_1 = require("util");
 class AmqpRpcServer {
     constructor(amqpQueueName, processMessageData, ampqUrl) {
         if (ampqUrl !== undefined) {
@@ -89,8 +88,8 @@ class AmqpRpcServer {
             await this.processMessageData(reqData, subject);
         }
         catch (err) {
-            console.error(serializeError(util_1.error));
-            subject.error(util_1.error);
+            console.error(serializeError(err));
+            subject.error(err);
         }
     }
     sendBackData(targetQueueName, corrId, data, status, endStream) {
