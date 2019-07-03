@@ -1,7 +1,6 @@
 import * as amqp from 'amqplib';
 import * as serializeError from 'serialize-error';
 import { Subject } from 'rxjs';
-import { error } from 'util';
 
 
 type ProcessMessageDataFunc =  (data: any, subject: Subject<any>) => Promise<void>;
@@ -95,8 +94,8 @@ export class AmqpRpcServer {
             const reqData = JSON.parse(msg.content.toString());
             await this.processMessageData(reqData, subject);
         } catch(err) {
-            console.error(serializeError(error));
-            subject.error(error);
+            console.error(serializeError(err));
+            subject.error(err);
         }
     }
 
