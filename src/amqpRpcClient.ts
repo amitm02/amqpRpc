@@ -56,11 +56,11 @@ export class AmqpRpcClient {
         return true;
     }
 
-    sendAndAccepctPromise(targetQueueName: string, data: any): Promise<Message> {
+    sendAndAcceptPromise(targetQueueName: string, data: any): Promise<Message> {
         return this.send(targetQueueName, data, false).toPromise();
     }
 
-    sendAndAccepctStream(targetQueueName: string, data: any): Observable<Message> {
+    sendAndAcceptStream(targetQueueName: string, data: any): Observable<Message> {
         return this.send(targetQueueName, data, true);
     }
 
