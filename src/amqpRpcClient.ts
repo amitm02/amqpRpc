@@ -56,8 +56,16 @@ export class AmqpRpcClient {
         return true;
     }
 
+    sendAndAccepctPromise(targetQueueName: string, data: any): Promise<Message> {
+        return this.send(targetQueueName, data, false).toPromise();
+    }
+
+    sendAndAccepctStream(targetQueueName: string, data: any): Observable<Message> {
+        return this.send(targetQueueName, data, true);
+    }
+
     //make to to complete the subject
-    send(targetQueueName: string, data: any, stream = false): Observable<Message> {   
+    private send(targetQueueName: string, data: any, stream = false): Observable<Message> {   
         if (this.ch === undefined) {
             throw new Error('server is not initilized yet');
         }     

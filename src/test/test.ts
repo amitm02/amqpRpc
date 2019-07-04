@@ -60,7 +60,7 @@ describe("simple messaging", function () {
     const amqpRpcClient = new AmqpRpcClient();
     const clinetSucc = await amqpRpcClient.init(1);
     expect(clinetSucc === true);
-    const resp = await amqpRpcClient.send(QUEUE_NAME, 3).toPromise();
+    const resp = await amqpRpcClient.sendAndAccepctPromise(QUEUE_NAME, 3);
     expect(resp.status).equal(200);
     expect(resp.body).equal(4);
     await amqpRpcServer.close();
@@ -77,7 +77,7 @@ describe("simple messaging", function () {
     const amqpRpcClient = new AmqpRpcClient();
     const clinetSucc = await amqpRpcClient.init(1);
     expect(clinetSucc === true);
-    const resp = await amqpRpcClient.send(QUEUE_NAME, 3).toPromise();
+    const resp = await amqpRpcClient.sendAndAccepctPromise(QUEUE_NAME, 3);
     expect(resp.status).equal(400);
     await amqpRpcServer.close();
     await amqpRpcClient.close();
@@ -104,7 +104,7 @@ describe("stream messaging", function () {
       amqpRpcServer.start(),
       amqpRpcClient.init(1)
     ]).then(() => {
-      amqpRpcClient.send(QUEUE_NAME, 0, true)
+      amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
         .pipe(
           map(msg => msg.body),
           toArray()
@@ -134,7 +134,7 @@ describe("stream messaging", function () {
       amqpRpcServer.start(),
       amqpRpcClient.init(1)
     ]).then(() => {
-      amqpRpcClient.send(QUEUE_NAME, 0, true)
+      amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
         .pipe(
           map(msg => msg.status),
           toArray()
@@ -165,7 +165,7 @@ describe("stream messaging", function () {
       amqpRpcServer.start(),
       amqpRpcClient.init(1)
     ]).then(() => {
-      amqpRpcClient.send(QUEUE_NAME, 0, true)
+      amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
         .pipe(
           map(msg => msg.status),
           toArray()
@@ -197,7 +197,7 @@ describe("stream messaging", function () {
         amqpRpcClient.close();
         done()
       }, EXPECTED_TIMEOUT);
-      amqpRpcClient.send(QUEUE_NAME, 0, true)
+      amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
         .pipe(
           map(msg => msg.body),
           toArray()
