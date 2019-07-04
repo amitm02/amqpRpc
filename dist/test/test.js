@@ -55,7 +55,7 @@ describe("simple messaging", function () {
         const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
         const clinetSucc = await amqpRpcClient.init(1);
         chai_1.expect(clinetSucc === true);
-        const resp = await amqpRpcClient.sendAndAccepctPromise(QUEUE_NAME, 3);
+        const resp = await amqpRpcClient.sendAndAcceptPromise(QUEUE_NAME, 3);
         chai_1.expect(resp.status).equal(200);
         chai_1.expect(resp.body).equal(4);
         await amqpRpcServer.close();
@@ -71,7 +71,7 @@ describe("simple messaging", function () {
         const amqpRpcClient = new amqpRpcClient_1.AmqpRpcClient();
         const clinetSucc = await amqpRpcClient.init(1);
         chai_1.expect(clinetSucc === true);
-        const resp = await amqpRpcClient.sendAndAccepctPromise(QUEUE_NAME, 3);
+        const resp = await amqpRpcClient.sendAndAcceptPromise(QUEUE_NAME, 3);
         chai_1.expect(resp.status).equal(400);
         await amqpRpcServer.close();
         await amqpRpcClient.close();
@@ -96,7 +96,7 @@ describe("stream messaging", function () {
             amqpRpcServer.start(),
             amqpRpcClient.init(1)
         ]).then(() => {
-            amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
+            amqpRpcClient.sendAndAcceptStream(QUEUE_NAME, 0)
                 .pipe(operators_1.map(msg => msg.body), operators_1.toArray()).subscribe(a => {
                 chai_1.expect(a).eql([...Array(10).keys()]);
                 amqpRpcServer.close();
@@ -123,7 +123,7 @@ describe("stream messaging", function () {
             amqpRpcServer.start(),
             amqpRpcClient.init(1)
         ]).then(() => {
-            amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
+            amqpRpcClient.sendAndAcceptStream(QUEUE_NAME, 0)
                 .pipe(operators_1.map(msg => msg.status), operators_1.toArray()).subscribe(a => {
                 chai_1.expect(a).eql([200, 200, 200, 400]);
                 amqpRpcServer.close();
@@ -150,7 +150,7 @@ describe("stream messaging", function () {
             amqpRpcServer.start(),
             amqpRpcClient.init(1)
         ]).then(() => {
-            amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
+            amqpRpcClient.sendAndAcceptStream(QUEUE_NAME, 0)
                 .pipe(operators_1.map(msg => msg.status), operators_1.toArray()).subscribe(a => {
                 chai_1.expect(a).eql([200, 200, 200, 400]);
                 amqpRpcServer.close();
@@ -178,7 +178,7 @@ describe("stream messaging", function () {
                 amqpRpcClient.close();
                 done();
             }, EXPECTED_TIMEOUT);
-            amqpRpcClient.sendAndAccepctStream(QUEUE_NAME, 0)
+            amqpRpcClient.sendAndAcceptStream(QUEUE_NAME, 0)
                 .pipe(operators_1.map(msg => msg.body), operators_1.toArray()).subscribe(a => {
                 clearTimeout(timeout);
                 amqpRpcServer.close();
