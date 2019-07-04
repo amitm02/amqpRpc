@@ -50,6 +50,12 @@ class AmqpRpcClient {
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
         return true;
     }
+    sendAndAccepctPromise(targetQueueName, data) {
+        return this.send(targetQueueName, data, false).toPromise();
+    }
+    sendAndAccepctStream(targetQueueName, data) {
+        return this.send(targetQueueName, data, true);
+    }
     //make to to complete the subject
     send(targetQueueName, data, stream = false) {
         if (this.ch === undefined) {

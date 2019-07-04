@@ -13,7 +13,9 @@ export declare class AmqpRpcClient {
     };
     constructor(ampqUrl?: string);
     init(maxRetry?: number): Promise<boolean>;
-    send(targetQueueName: string, data: any, stream?: boolean): Observable<Message>;
+    sendAndAccepctPromise(targetQueueName: string, data: any): Promise<Message>;
+    sendAndAccepctStream(targetQueueName: string, data: any): Observable<Message>;
+    private send;
     private handleMessage;
     flush(): Promise<void>;
     close(): Promise<void>;
