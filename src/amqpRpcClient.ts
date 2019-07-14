@@ -2,7 +2,7 @@ import * as amqp from 'amqplib';
 import { v4 as uuid } from 'uuid';
 import { ReplaySubject, Observable } from 'rxjs';
 
-interface Message {body: any, status: number};
+interface Message<T> {body: T, status: number};
 
 export class AmqpRpcClient {
     ampqUrl: string;
@@ -56,21 +56,21 @@ export class AmqpRpcClient {
         return true;
     }
 
-    sendAndAcceptPromise(targetQueueName: string, data: any): Promise<Message> {
-        return this.send(targetQueueName, data, false).toPromise();
+    sendAndAcceptPromise<T>(targetQueueName: string, data: any): Promise<Message<T>> {
+        return this.send<T>(targetQueueName, data, false).toPromise();
     }
 
-    sendAndAcceptStream(targetQueueName: string, data: any): Observable<Message> {
-        return this.send(targetQueueName, data, true);
+    sendAndAcceptStream<T>(targetQueueName: string, data: any): Observable<Message<T>> {
+        return this.send<T>(targetQueueName, data, true);
     }
 
     //make to to complete the subject
-    private send(targetQueueName: string, data: any, stream = false): Observable<Message> {   
+    private send<T>(targetQueueName: string, data: any, stream = false): Observable<Message<T>> {   
         if (this.ch === undefined) {
             throw new Error('server is not initilized yet');
         }     
         const corrId = uuid();
-        const subject = new ReplaySubject<Message>();
+        const subject = new ReplaySubject<Message<T>>();
         this.pendingRequests[corrId] = subject;
         this.ch.sendToQueue(targetQueueName,
             Buffer.from(JSON.stringify(data)),
