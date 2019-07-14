@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const uuid_1 = require("uuid");
 const rxjs_1 = require("rxjs");
-;
 class AmqpRpcClient {
     constructor(ampqUrl) {
         // @ts-ignore

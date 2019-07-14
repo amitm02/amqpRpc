@@ -1,9 +1,12 @@
 import * as amqp from 'amqplib';
 import { ReplaySubject, Observable } from 'rxjs';
-interface Message<T> {
+declare type Message<T = any> = {
     body: T;
-    status: number;
-}
+    status: 200;
+} | {
+    body: any;
+    status: 400 | 500 | 404;
+};
 export declare class AmqpRpcClient {
     ampqUrl: string;
     ch: amqp.Channel | undefined;
@@ -13,8 +16,8 @@ export declare class AmqpRpcClient {
     };
     constructor(ampqUrl?: string);
     init(maxRetry?: number): Promise<boolean>;
-    sendAndAcceptPromise<T>(targetQueueName: string, data: any): Promise<Message<T>>;
-    sendAndAcceptStream<T>(targetQueueName: string, data: any): Observable<Message<T>>;
+    sendAndAcceptPromise<T = any>(targetQueueName: string, data: any): Promise<Message<T>>;
+    sendAndAcceptStream<T = any>(targetQueueName: string, data: any): Observable<Message<T>>;
     private send;
     private handleMessage;
     flush(): Promise<void>;
