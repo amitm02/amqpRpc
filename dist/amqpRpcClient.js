@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const uuid_1 = require("uuid");
 const rxjs_1 = require("rxjs");
+const operators_1 = require("rxjs/operators");
 class AmqpRpcClient {
     constructor(ampqUrl) {
         // @ts-ignore
@@ -49,14 +50,14 @@ class AmqpRpcClient {
         this.ch.consume(this.respondQueueName, this.handleMessage.bind(this), { noAck: true });
         return true;
     }
-    sendAndAcceptPromise(targetQueueName, data) {
-        return this.send(targetQueueName, data, false).toPromise();
+    sendAndAcceptPromise(targetQueueName, data, timeoutMs = 60 * 60 * 1000) {
+        return this.send(targetQueueName, data, false, timeoutMs).toPromise();
     }
-    sendAndAcceptStream(targetQueueName, data) {
-        return this.send(targetQueueName, data, true);
+    sendAndAcceptStream(targetQueueName, data, timeoutMs = 60 * 60 * 1000) {
+        return this.send(targetQueueName, data, true, timeoutMs);
     }
     //make to to complete the subject
-    send(targetQueueName, data, stream = false) {
+    send(targetQueueName, data, stream = false, timeoutMs = 60 * 60 * 1000) {
         if (this.ch === undefined) {
             throw new Error('server is not initilized yet');
         }
@@ -70,9 +71,10 @@ class AmqpRpcClient {
             type: 'C2S',
             headers: {
                 stream
-            }
+            },
+            expiration: timeoutMs
         });
-        return subject;
+        return subject.pipe(operators_1.timeoutWith(timeoutMs, rxjs_1.of({ status: 408, body: `timeout (${timeoutMs}ms)` })));
     }
     handleMessage(msg) {
         if (msg === null) {

@@ -5,7 +5,7 @@ declare type Message<T = any> = {
     status: 200;
 } | {
     body: any;
-    status: 400 | 500 | 404;
+    status: 400 | 500 | 404 | 408;
 };
 export declare class AmqpRpcClient {
     ampqUrl: string;
@@ -16,8 +16,8 @@ export declare class AmqpRpcClient {
     };
     constructor(ampqUrl?: string);
     init(maxRetry?: number): Promise<boolean>;
-    sendAndAcceptPromise<T = any>(targetQueueName: string, data: any): Promise<Message<T>>;
-    sendAndAcceptStream<T = any>(targetQueueName: string, data: any): Observable<Message<T>>;
+    sendAndAcceptPromise<T = any>(targetQueueName: string, data: any, timeoutMs?: number): Promise<Message<T>>;
+    sendAndAcceptStream<T = any>(targetQueueName: string, data: any, timeoutMs?: number): Observable<Message<T>>;
     private send;
     private handleMessage;
     flush(): Promise<void>;

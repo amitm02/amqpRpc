@@ -1,10 +1,11 @@
 import * as amqp from 'amqplib';
 import { v4 as uuid } from 'uuid';
-import { ReplaySubject, Observable } from 'rxjs';
+import { ReplaySubject, Observable, of } from 'rxjs';
+import { timeoutWith } from 'rxjs/operators';
 
 
 
-type Message<T=any> =  {body: T, status: 200} | {body: any, status:400|500|404} ;
+type Message<T=any> =  {body: T, status: 200} | {body: any, status:400|500|404|408} ;
 
 export class AmqpRpcClient {
     ampqUrl: string;
@@ -58,16 +59,16 @@ export class AmqpRpcClient {
         return true;
     }
 
-    sendAndAcceptPromise<T=any>(targetQueueName: string, data: any): Promise<Message<T>> {
-        return this.send<T>(targetQueueName, data, false).toPromise();
+    sendAndAcceptPromise<T=any>(targetQueueName: string, data: any, timeoutMs=60*60*1000): Promise<Message<T>> {
+        return this.send<T>(targetQueueName, data, false, timeoutMs).toPromise();
     }
 
-    sendAndAcceptStream<T=any>(targetQueueName: string, data: any): Observable<Message<T>> {
-        return this.send<T>(targetQueueName, data, true);
+    sendAndAcceptStream<T=any>(targetQueueName: string, data: any, timeoutMs=60*60*1000): Observable<Message<T>> {
+        return this.send<T>(targetQueueName, data, true, timeoutMs);
     }
 
     //make to to complete the subject
-    private send<T=any>(targetQueueName: string, data: any, stream = false): Observable<Message<T>> {   
+    private send<T=any>(targetQueueName: string, data: any, stream = false, timeoutMs=60*60*1000): Observable<Message<T>> {   
         if (this.ch === undefined) {
             throw new Error('server is not initilized yet');
         }     
@@ -83,10 +84,11 @@ export class AmqpRpcClient {
                 type: 'C2S',
                 headers: {
                     stream
-                }
+                },
+                expiration: timeoutMs
             }
         );
-        return subject;
+        return subject.pipe(timeoutWith(timeoutMs, of({status: 408, body: `timeout (${timeoutMs}ms)`})));
     }
 
     private handleMessage(msg: amqp.Message | null): void {

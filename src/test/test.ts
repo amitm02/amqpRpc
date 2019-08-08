@@ -82,6 +82,20 @@ describe("simple messaging", function () {
     await amqpRpcServer.close();
     await amqpRpcClient.close();
   }).timeout(5000);
+
+  it("simple messaging with timeout", async function () {
+    const QUEUE_NAME = 'simple messaging with error queue';
+    const amqpRpcServer = new AmqpRpcServer(QUEUE_NAME, async (data, subject) => {});
+    const ServerSucc = await amqpRpcServer.start();
+    expect(ServerSucc === true);
+    const amqpRpcClient = new AmqpRpcClient();
+    const clinetSucc = await amqpRpcClient.init(1);
+    expect(clinetSucc === true);
+    const resp = await amqpRpcClient.sendAndAcceptPromise(QUEUE_NAME, 3, 500);
+    expect(resp.status).equal(408);
+    await amqpRpcServer.close();
+    await amqpRpcClient.close();
+  }).timeout(5000);
 });
 
 describe("stream messaging", function () {
@@ -209,6 +223,28 @@ describe("stream messaging", function () {
         });
     });
   }).timeout(5000);
+
+  it("stream messaging with timeout", function (done) {
+    const QUEUE_NAME = 'stream messaging queue';
+    const amqpRpcServer = new AmqpRpcServer(QUEUE_NAME, async (data, subject) => {});
+    const amqpRpcClient = new AmqpRpcClient();
+    Promise.all([
+      amqpRpcServer.start(),
+      amqpRpcClient.init(1)
+    ]).then(() => {
+      amqpRpcClient.sendAndAcceptStream(QUEUE_NAME, 0, 500)
+        .pipe(
+          toArray()
+        ).subscribe(a => {
+          expect(a).lengthOf(1);
+          expect(a[0]).to.have.property('status', 408);
+          amqpRpcServer.close();
+          amqpRpcClient.close();
+          done();
+        });
+    });
+  }).timeout(5000);
+
 });
 
 describe('rabbitmq monitor', function () {
