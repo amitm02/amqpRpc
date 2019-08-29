@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getConfigValue } from 'container-config';
 
 interface QueueStatus {
     name: string;
@@ -10,13 +11,17 @@ interface RabbitmqQueuesDataRespItem extends QueueStatus {
     [x: string]: any;
 }
 
+const rabbitmqUsername = getConfigValue('RABBITMQ_USER');
+const rabbitmqPassword = getConfigValue('RABBITMQ_PASSWORD');
+const rabbitMqUrl = `http://${getConfigValue('RABBITMQ_HOSTNAME')}:15672`
+
 export async function queueStatus(user: string, password: string, queueName: string): Promise<QueueStatus> {
     const qs = await queuesStatus(user, password);
     return qs.filter(q => q.name === queueName)[0];
 }
 
 export async function queuesStatus(username: string='guest', password: string='guest', filterExclusive=true): Promise<QueueStatus[]> {
-    const url = `${getRabbitMqUrl()}/api/queues/`;
+    const url = `${rabbitMqUrl}/api/queues/`;
     const resp = await axios.get<RabbitmqQueuesDataRespItem[]>(url, {
         auth: {
             username,
@@ -44,28 +49,17 @@ export async function purgeAllQueues(
     for (let q of qs) {
         if (q.messages > 0) {
             console.log(`purging ${q.messages} from queue ${q.name}`); 
-            await purgeQueue(q.name, username, password);
+            await purgeQueue(q.name);
         }
     }
 }
 
-export async function purgeQueue(
-    queueName: string, 
-    username: string='guest', 
-    password: string='guest'): Promise<void> {
-    const url = `${getRabbitMqUrl()}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
+export async function purgeQueue(queueName: string): Promise<void> {
+    const url = `${rabbitMqUrl}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
     const resp = await axios.delete(url, {
         auth: {
-            username,
-            password
+            username: rabbitmqUsername,
+            password: rabbitmqPassword
           }
     });
-}
-
-function getRabbitMqUrl(): string {
-    if (process.env.RABBITMQ_HOSTNAME !== undefined) {
-        return `http://${process.env.RABBITMQ_HOSTNAME}:15672`;
-    } else {
-        return 'http://localhost:15672';
-    }
 }

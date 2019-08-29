@@ -1,13 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = require("axios");
+const container_config_1 = require("container-config");
+const rabbitmqUsername = container_config_1.getConfigValue('RABBITMQ_USER');
+const rabbitmqPassword = container_config_1.getConfigValue('RABBITMQ_PASSWORD');
+const rabbitMqUrl = `http://${container_config_1.getConfigValue('RABBITMQ_HOSTNAME')}:15672`;
 async function queueStatus(user, password, queueName) {
     const qs = await queuesStatus(user, password);
     return qs.filter(q => q.name === queueName)[0];
 }
 exports.queueStatus = queueStatus;
 async function queuesStatus(username = 'guest', password = 'guest', filterExclusive = true) {
-    const url = `${getRabbitMqUrl()}/api/queues/`;
+    const url = `${rabbitMqUrl}/api/queues/`;
     const resp = await axios_1.default.get(url, {
         auth: {
             username,
@@ -32,27 +36,19 @@ async function purgeAllQueues(username = 'guest', password = 'guest') {
     for (let q of qs) {
         if (q.messages > 0) {
             console.log(`purging ${q.messages} from queue ${q.name}`);
-            await purgeQueue(q.name, username, password);
+            await purgeQueue(q.name);
         }
     }
 }
 exports.purgeAllQueues = purgeAllQueues;
-async function purgeQueue(queueName, username = 'guest', password = 'guest') {
-    const url = `${getRabbitMqUrl()}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
+async function purgeQueue(queueName) {
+    const url = `${rabbitMqUrl}/api/queues/${encodeURIComponent('/')}/${encodeURIComponent(queueName)}/contents`;
     const resp = await axios_1.default.delete(url, {
         auth: {
-            username,
-            password
+            username: rabbitmqUsername,
+            password: rabbitmqPassword
         }
     });
 }
 exports.purgeQueue = purgeQueue;
-function getRabbitMqUrl() {
-    if (process.env.RABBITMQ_HOSTNAME !== undefined) {
-        return `http://${process.env.RABBITMQ_HOSTNAME}:15672`;
-    }
-    else {
-        return 'http://localhost:15672';
-    }
-}
 //# sourceMappingURL=rabbitmqMonitor.js.map

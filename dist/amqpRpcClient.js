@@ -4,6 +4,7 @@ const amqp = require("amqplib");
 const uuid_1 = require("uuid");
 const rxjs_1 = require("rxjs");
 const operators_1 = require("rxjs/operators");
+const container_config_1 = require("container-config");
 class AmqpRpcClient {
     constructor(ampqUrl) {
         // @ts-ignore
@@ -12,12 +13,15 @@ class AmqpRpcClient {
             this.ampqUrl = ampqUrl;
         }
         else {
-            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
-                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
-            }
-            else {
-                this.ampqUrl = 'amqp://localhost';
-            }
+            const rabbitmqHostname = container_config_1.getConfigValue('RABBITMQ_HOSTNAME');
+            const rabbitmqUsername = container_config_1.getConfigValue('RABBITMQ_USER');
+            const rabbitmqPassword = container_config_1.getConfigValue('RABBITMQ_PASSWORD');
+            this.ampqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqHostname}`;
+            // if (rabbitmqHostname !== undefined) {
+            //     this.ampqUrl = `amqp://${rabbitmqHostname}`;
+            // } else {
+            //     this.ampqUrl = 'amqp://localhost';
+            // }
         }
     }
     async init(maxRetry) {

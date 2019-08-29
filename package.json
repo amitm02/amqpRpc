@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "pretest": "if ! nc -z localhost 15672; then docker-compose -f src/test/docker-compose-rabbitmq.yml up -d && echo waiting to rabbitmq && sleep 10; fi",
-    "test": "mocha -r ts-node/register src/test/*.ts --exit",
+    "test": "env RABBITMQ_HOSTNAME=127.0.0.1 RABBITMQ_USER=guest RABBITMQ_PASSWORD=guest mocha -r ts-node/register src/test/*.ts --exit",
     "build": "tsc"
   },
   "pre-commit": [
@@ -23,20 +23,21 @@
     "axios": "^0.18.1",
     "rxjs": "^6.5.2",
     "serialize-error": "^3.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/chai-as-promised": "^7.1.1",
+    "@types/chai": "^4.2.0",
+    "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.14.15",
+    "@types/node": "^10.14.16",
     "@types/serialize-error": "^2.1.0",
     "@types/uuid": "^3.4.5",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "container-config": "git+ssh://git@github.com/amitm02/container-config.git",
     "mocha": "^5.2.0",
     "pre-commit": "^1.2.2",
     "ts-node": "^7.0.1",
-    "typescript": "^3.5.3"
+    "typescript": "^3.6.2"
   }
 }

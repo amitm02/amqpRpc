@@ -3,18 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const amqp = require("amqplib");
 const serializeError = require("serialize-error");
 const rxjs_1 = require("rxjs");
+const container_config_1 = require("container-config");
 class AmqpRpcServer {
     constructor(amqpQueueName, processMessageData, ampqUrl) {
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         }
         else {
-            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
-                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
-            }
-            else {
-                this.ampqUrl = 'amqp://localhost';
-            }
+            const rabbitmqHostname = container_config_1.getConfigValue('RABBITMQ_HOSTNAME');
+            const rabbitmqUsername = container_config_1.getConfigValue('RABBITMQ_USER');
+            const rabbitmqPassword = container_config_1.getConfigValue('RABBITMQ_PASSWORD');
+            this.ampqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqHostname}`;
         }
         this.amqpQueueName = amqpQueueName;
         this.processMessageData = processMessageData;

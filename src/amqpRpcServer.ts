@@ -1,6 +1,7 @@
 import * as amqp from 'amqplib';
 import * as serializeError from 'serialize-error';
 import { Subject } from 'rxjs';
+import { getConfigValue } from 'container-config';
 
 
 type ProcessMessageDataFunc =  (data: any, subject: Subject<any>) => Promise<void>;
@@ -15,11 +16,10 @@ export class AmqpRpcServer {
         if (ampqUrl !== undefined) {
             this.ampqUrl = ampqUrl;
         } else {
-            if (process.env.RABBITMQ_HOSTNAME !== undefined) {
-                this.ampqUrl = `amqp://${process.env.RABBITMQ_HOSTNAME}`;
-            } else {
-                this.ampqUrl = 'amqp://localhost';
-            }
+            const rabbitmqHostname = getConfigValue('RABBITMQ_HOSTNAME');
+            const rabbitmqUsername = getConfigValue('RABBITMQ_USER');
+            const rabbitmqPassword = getConfigValue('RABBITMQ_PASSWORD');
+            this.ampqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqHostname}`;
         }
         this.amqpQueueName = amqpQueueName;
         this.processMessageData = processMessageData;
