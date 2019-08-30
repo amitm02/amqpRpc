@@ -29,7 +29,7 @@
     "@types/chai": "^4.2.0",
     "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.14.16",
+    "@types/node": "^10.14.17",
     "@types/serialize-error": "^2.1.0",
     "@types/uuid": "^3.4.5",
     "chai": "^4.2.0",
