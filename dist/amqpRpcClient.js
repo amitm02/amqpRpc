@@ -5,6 +5,7 @@ const uuid_1 = require("uuid");
 const rxjs_1 = require("rxjs");
 const operators_1 = require("rxjs/operators");
 const container_config_1 = require("container-config");
+const serializeError = require("serialize-error");
 class AmqpRpcClient {
     constructor(ampqUrl) {
         // @ts-ignore
@@ -118,7 +119,7 @@ class AmqpRpcClient {
             await this.ch.close();
         }
         catch (err) {
-            console.error(err);
+            console.error(serializeError(JSON.stringify(err, null, 4)));
         }
     }
 }
