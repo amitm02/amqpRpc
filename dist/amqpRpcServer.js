@@ -88,7 +88,7 @@ class AmqpRpcServer {
         }
         catch (err) {
             console.error(serializeError(err));
-            subject.error(err);
+            subject.error(serializeError(err));
         }
     }
     sendBackData(targetQueueName, corrId, data, status, endStream) {
