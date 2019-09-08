@@ -80,6 +80,8 @@ export class AmqpRpcServer {
                 }
             },
             error: (err) => {
+                console.log(`sendBackData err: ${JSON.stringify(serializeError(err), null, 4)}`);
+                console.log(`sendBackData msg: ${serializeError(err).message}`);
                 this.sendBackData(replyTo, corrId, serializeError(err).message, 400, true);
                 ch.ack(msg);
             },
