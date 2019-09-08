@@ -72,7 +72,10 @@ class AmqpRpcServer {
                 }
             },
             error: (err) => {
-                this.sendBackData(replyTo, corrId, serializeError(err).message, 400, true);
+                if (err === undefined) {
+                    err = 'undefined error';
+                }
+                this.sendBackData(replyTo, corrId, err, 400, true);
                 ch.ack(msg);
             },
             complete: () => {
@@ -88,7 +91,7 @@ class AmqpRpcServer {
         }
         catch (err) {
             console.error(serializeError(err));
-            subject.error(serializeError(err));
+            subject.error(serializeError(err).message);
         }
     }
     sendBackData(targetQueueName, corrId, data, status, endStream) {
