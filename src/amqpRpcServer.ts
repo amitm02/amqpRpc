@@ -95,7 +95,7 @@ export class AmqpRpcServer {
             await this.processMessageData(reqData, subject);
         } catch(err) {
             console.error(serializeError(err));
-            subject.error(serializeError(err).message);
+            subject.error(serializeError(err));
         }
     }
 
