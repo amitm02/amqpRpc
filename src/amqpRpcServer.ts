@@ -80,7 +80,7 @@ export class AmqpRpcServer {
                 }
             },
             error: (err) => {
-                this.sendBackData(replyTo, corrId, serializeError(err), 400, true);
+                this.sendBackData(replyTo, corrId, serializeError(err).message, 400, true);
                 ch.ack(msg);
             },
             complete: () => {
@@ -95,7 +95,7 @@ export class AmqpRpcServer {
             await this.processMessageData(reqData, subject);
         } catch(err) {
             console.error(serializeError(err));
-            subject.error(serializeError(err));
+            subject.error(serializeError(err).message);
         }
     }
 

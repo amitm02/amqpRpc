@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { ReplaySubject, Observable, of } from 'rxjs';
 import { timeoutWith } from 'rxjs/operators';
 import { getConfigValue } from 'container-config';
-
+import * as serializeError from 'serialize-error';
 
 
 type Message<T=any> =  {body: T, status: 200} | {body: any, status:400|500|404|408} ;
@@ -136,7 +136,7 @@ export class AmqpRpcClient {
         try {
             await this.ch.close();
         } catch(err) {
-            console.error(err);
+            console.error(serializeError(JSON.stringify(err, null, 4)));
         }
     }
 }
