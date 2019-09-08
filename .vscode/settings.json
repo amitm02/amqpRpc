@@ -1,0 +1,7 @@
+{
+    "mocha.env": {
+        "RABBITMQ_USER": "guest",
+        "RABBITMQ_PASSWORD": "guest",
+        "RABBITMQ_HOSTNAME": "127.0.0.1",
+    }
+}
