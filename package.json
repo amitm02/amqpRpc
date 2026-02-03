@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/amqplib": "^0.5.13",
-    "amqplib": "^0.5.5",
+    "amqplib": "^0.10.9",
     "axios": "^0.18.1",
     "rxjs": "^6.5.2",
     "serialize-error": "^3.0.0",
