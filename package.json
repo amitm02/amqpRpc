@@ -35,7 +35,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "container-config": "git+ssh://git@github.com/amitm02/container-config.git",
-    "mocha": "^5.2.0",
+    "mocha": "^11.7.5",
     "pre-commit": "^1.2.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.6.2"
