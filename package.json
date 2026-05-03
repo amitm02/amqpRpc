@@ -23,7 +23,7 @@
     "axios": "^0.18.1",
     "rxjs": "^6.5.2",
     "serialize-error": "^3.0.0",
-    "uuid": "^3.3.3"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.0",
